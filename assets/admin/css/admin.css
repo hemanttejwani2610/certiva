@@ -1,0 +1,142 @@
+.certiva-wrap .certiva-badge {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 3px;
+	background: #f0f0f1;
+	color: #50575e;
+	font-size: 12px;
+}
+
+.certiva-wrap .certiva-badge-success {
+	background: #edfaef;
+	color: #1a7e2c;
+}
+
+.certiva-wrap .certiva-actions .button {
+	margin-right: 4px;
+}
+
+.certiva-wrap .certiva-filters {
+	margin-bottom: 12px;
+}
+
+.certiva-extra-fields input {
+	width: 100%;
+}
+
+#certiva-designer-stage {
+	position: relative;
+	background-color: #f6f7f7;
+	border: 1px solid #dcdcde;
+	background-position: center;
+	overflow: hidden;
+}
+
+#certiva-designer-fields {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.certiva-field-box {
+	position: absolute;
+	cursor: move;
+	border: 1px dashed transparent;
+	padding: 2px;
+	white-space: nowrap;
+	user-select: none;
+	line-height: 1.2;
+}
+
+.certiva-field-box:hover {
+	border-color: #8c8f94;
+}
+
+.certiva-field-box:hover .certiva-field-remove,
+.certiva-field-box.is-selected .certiva-field-remove {
+	display: flex;
+}
+
+.certiva-field-remove {
+	display: none;
+	position: absolute;
+	top: -9px;
+	right: -9px;
+	width: 18px;
+	height: 18px;
+	padding: 0;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid #fff;
+	border-radius: 50%;
+	background: #d63638;
+	color: #fff;
+	font-size: 13px;
+	line-height: 1;
+	cursor: pointer;
+	z-index: 2;
+}
+
+.certiva-field-remove:hover {
+	background: #a4282a;
+}
+
+.certiva-field-box.is-selected {
+	border-color: #2271b1;
+	background: rgba(34, 113, 177, 0.08);
+}
+
+.certiva-designer-toolbar {
+	margin-top: 12px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.certiva-field-inspector {
+	margin-top: 12px;
+	padding: 12px;
+	border: 1px solid #dcdcde;
+	background: #fff;
+	max-width: 320px;
+}
+
+.certiva-field-inspector p {
+	margin: 6px 0;
+}
+
+.certiva-public-form .certiva-field {
+	margin-bottom: 1em;
+}
+
+.certiva-public-form label {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 0.3em;
+}
+
+.certiva-public-form input[type="email"] {
+	width: 100%;
+	max-width: 420px;
+	padding: 0.5em;
+}
+
+.certiva-public-form .certiva-hp-field {
+	position: absolute;
+	left: -9999px;
+	top: -9999px;
+}
+
+.certiva-public-form .certiva-notice {
+	padding: 0.75em 1em;
+	border-left: 4px solid #2271b1;
+	background: #f0f6fc;
+	margin-bottom: 1em;
+}
+
+.certiva-public-form .certiva-notice.certiva-notice-error {
+	border-left-color: #d63638;
+	background: #fcf0f1;
+}

@@ -1,0 +1,26 @@
+{
+    "name": "certiva/certiva",
+    "description": "PDF generation dependencies for the Certiva WordPress plugin.",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": ">=8.0",
+        "mpdf/mpdf": "^8.2"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true,
+        "platform": {
+            "php": "8.0"
+        }
+    },
+    "autoload": {
+        "classmap": [
+            "includes/"
+        ]
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.6",
+        "yoast/phpunit-polyfills": "^2.0"
+    }
+}
