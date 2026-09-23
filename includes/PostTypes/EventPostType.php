@@ -8,8 +8,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * The certiva_event custom post type: an exam, seminar, or conference that
- * students can be registered for.
+ * The certiva_event custom post type: an exam, seminar, conference, or
+ * workshop that students can be registered for.
  */
 final class EventPostType {
 
@@ -18,6 +18,7 @@ final class EventPostType {
 	public const TYPE_EXAM       = 'exam';
 	public const TYPE_SEMINAR    = 'seminar';
 	public const TYPE_CONFERENCE = 'conference';
+	public const TYPE_WORKSHOP   = 'workshop';
 
 	public const AVAILABILITY_ENABLED  = 'enabled';
 	public const AVAILABILITY_DISABLED = 'disabled';
@@ -37,6 +38,7 @@ final class EventPostType {
 			self::TYPE_EXAM       => __( 'Exam', 'certiva' ),
 			self::TYPE_SEMINAR    => __( 'Seminar', 'certiva' ),
 			self::TYPE_CONFERENCE => __( 'Conference', 'certiva' ),
+			self::TYPE_WORKSHOP   => __( 'Workshop', 'certiva' ),
 		];
 	}
 

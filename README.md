@@ -60,9 +60,11 @@ Certiva keeps each concern in its own layer:
 
 **Custom post types**
 
-- **`certiva_student`** — full name (post title), email, optional student ID, and an open-ended list of extra key/value placeholder fields (e.g. "Course", "Grade") for use on certificates.
-- **`certiva_event`** — title, type (`exam` / `seminar` / `conference`), date, optional location, a default certificate template, and a certificate-availability toggle.
-- **`certiva_template`** — a background image, page size/orientation, and a JSON-encoded list of positioned, styled text fields (student name, event title, event date, certificate ID, issue date, or custom placeholders/static text), edited visually in the admin.
+- **`certiva_student`** — full name (post title), email, optional student ID, a college (see below), and an open-ended list of extra key/value placeholder fields (e.g. "Course", "Grade") for use on certificates.
+- **`certiva_event`** — title, type (`exam` / `seminar` / `conference` / `workshop`), date, optional location, a default certificate template, and a certificate-availability toggle.
+- **`certiva_template`** — a background image, page size/orientation, and a JSON-encoded list of positioned, styled text fields (student name, college, event title, event date, certificate ID, issue date, or custom placeholders/static text), edited visually in the admin.
+
+**College: a taxonomy, not a text field or a post type.** Colleges are a small, reusable, controlled vocabulary — attaching a taxonomy (`certiva_college`) to students means admins pick from existing colleges instead of retyping (and typo-drifting) the same name, and it comes with a free "filter by college" dropdown and column on the Students list. It's deliberately not a dedicated post type: a college here is just a name with nothing else attached, so a full CPT would be unwarranted overhead. The student edit screen shows a single-select dropdown (not WordPress's default multi-select tag/checklist box, since a student has at most one college) with an inline "add a new college" option; college names can also be imported via the CSV student import (see below) and are available on certificates as the `College` placeholder field. Rename, merge, or delete colleges from **Certiva → Colleges** (WordPress's standard term-management screen).
 
 **Custom database tables** (relational data doesn't fit naturally as post meta):
 
@@ -76,14 +78,14 @@ Certiva keeps each concern in its own layer:
 
 1. **Certiva → Events → Add New**: set the title, type, date, optional location, a default certificate template, and whether certificates are enabled for this event yet.
 2. **Certiva → Templates → Add New**: upload a background image, choose a page size/orientation, then use the visual designer to drag the built-in placeholder fields (student name, event title, event date, certificate ID, issue date) onto the certificate, styling each one (font, size, color, alignment, bold/italic). You can also add a custom placeholder tied to a student's extra field, or static text. **Preview with Sample Data** renders a real PDF with placeholder values so you can check the layout before saving.
-3. **Certiva → Registrations**: register a student for an event by typing a few characters of their name or email into the student field (a live, indexed search — not a preloaded list, so it stays fast with any number of students), optionally overriding the event's default template, and optionally marking the registration eligible immediately. The same screen lists every registration with its eligibility, certificate status, and actions (Preview / Generate / Regenerate / Download / Resend / Remove). The same list, scoped to one student, also appears as a meta box on that student's edit screen.
+3. **Certiva → Registrations**: register a student for an event by typing a few characters of their name or email into the student field (a live, indexed search — not a preloaded list, so it stays fast with any number of students). An optional "Filter by college" dropdown narrows that search to one college — useful once multiple colleges' students share similar names — and, picked on its own with no text typed, lets you browse that college's whole roster. From there, optionally override the event's default template and optionally mark the registration eligible immediately. The same screen lists every registration with its eligibility, certificate status, and actions (Preview / Generate / Regenerate / Download / Resend / Remove). The same list, scoped to one student, also appears as a meta box on that student's edit screen.
 
 ### Bulk-importing students from a CSV
 
 Click **Import CSV** above the Students list (or **Certiva → Import Students**) to add many students at once:
 
 1. **Upload** a `.csv` file (5 MB max) whose first row is a header row.
-2. **Map columns** — Certiva guesses Full Name / Email / Student ID from common header names, but you can point any column at Full Name, Email Address, Student ID, or "Extra Placeholder Field" (with your own label), or leave it unmapped. A preview of the first few values from each column is shown to help you check the mapping. Full Name and Email are required.
+2. **Map columns** — Certiva guesses Full Name / Email / Student ID / College from common header names, but you can point any column at Full Name, Email Address, Student ID, College, or "Extra Placeholder Field" (with your own label), or leave it unmapped. A College value is matched to an existing college by name (case-insensitive) or created if it doesn't exist yet — same as typing one on the student edit screen. A preview of the first few values from each column is shown to help you check the mapping. Full Name and Email are required.
 3. Choose whether a row whose email matches an **existing** student should **update** that student (merging in any mapped extra fields by label, without discarding fields not present in this file) or always create a new one — useful for re-importing an updated roster without creating duplicates.
 4. **Import** — you'll get a summary of how many students were created/updated/skipped, with a reason for every skipped row (e.g. missing or invalid email).
 

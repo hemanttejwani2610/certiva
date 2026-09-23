@@ -29,6 +29,9 @@ $guess_target = static function ( string $header ): string {
 	if ( preg_match( '/(student[_\s-]?id|roll[_\s-]?no|roll[_\s-]?number|enrollment)/', $h ) ) {
 		return StudentImporter::TARGET_STUDENT_ID;
 	}
+	if ( preg_match( '/(college|university|institute|institution|school)/', $h ) ) {
+		return StudentImporter::TARGET_COLLEGE;
+	}
 
 	return StudentImporter::TARGET_SKIP;
 };

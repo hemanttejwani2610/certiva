@@ -6,6 +6,7 @@
 
 use Certiva\Import\StudentImporter;
 use Certiva\Data\StudentEmailIndexRepository;
+use Certiva\PostTypes\CollegeTaxonomy;
 use Certiva\PostTypes\StudentPostType;
 
 class Certiva_Student_Import_Test extends WP_UnitTestCase {
@@ -150,5 +151,35 @@ class Certiva_Student_Import_Test extends WP_UnitTestCase {
 
 		$matches = StudentEmailIndexRepository::get_student_ids_for_email( $email );
 		$this->assertGreaterThanOrEqual( 2, count( $matches ), 'With update_existing disabled, a second student sharing the email must be created, not merged.' );
+	}
+
+	public function test_college_column_creates_and_assigns_the_term() {
+		$email = 'college-import-' . wp_generate_password( 6, false ) . '@example.com';
+		$path  = $this->write_csv( "Full Name,Email,College\nAanya Sharma,{$email},Riverside College\n" );
+
+		$mapping = [ 0 => StudentImporter::TARGET_FULL_NAME, 1 => StudentImporter::TARGET_EMAIL, 2 => StudentImporter::TARGET_COLLEGE ];
+		$results = StudentImporter::process( $path, $mapping, [], false );
+
+		$this->assertSame( 1, $results['created'] );
+
+		$student_ids = StudentEmailIndexRepository::get_student_ids_for_email( $email );
+		$this->assertNotEmpty( $student_ids );
+		$this->assertSame( 'Riverside College', CollegeTaxonomy::get_college_name( (int) $student_ids[0] ) );
+	}
+
+	public function test_reimport_with_update_existing_reassigns_college() {
+		$email      = 'college-reimport-' . wp_generate_password( 6, false ) . '@example.com';
+		$student_id = self::factory()->post->create( [ 'post_type' => StudentPostType::POST_TYPE, 'post_title' => 'Existing', 'post_status' => 'publish' ] );
+		update_post_meta( $student_id, 'certiva_email', $email );
+		StudentEmailIndexRepository::upsert( $student_id, $email );
+		wp_set_object_terms( $student_id, [ CollegeTaxonomy::get_or_create_term_id( 'Old College' ) ], CollegeTaxonomy::TAXONOMY, false );
+
+		$path    = $this->write_csv( "Full Name,Email,College\nExisting,{$email},New College\n" );
+		$mapping = [ 0 => StudentImporter::TARGET_FULL_NAME, 1 => StudentImporter::TARGET_EMAIL, 2 => StudentImporter::TARGET_COLLEGE ];
+
+		$results = StudentImporter::process( $path, $mapping, [], true );
+
+		$this->assertSame( 1, $results['updated'] );
+		$this->assertSame( 'New College', CollegeTaxonomy::get_college_name( $student_id ) );
 	}
 }

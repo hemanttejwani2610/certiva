@@ -127,8 +127,22 @@
 
 		var $hidden = $( '#student_id' );
 		var $list = $( '#certiva-student-results' );
+		var $collegeFilter = $( '#certiva-college-filter-select' );
 		var debounceTimer = null;
 		var activeIndex = -1;
+
+		function runSearch( term ) {
+			$.post( certivaAdmin.ajaxUrl, {
+				action: 'certiva_search_students',
+				nonce: certivaAdmin.nonce,
+				term: term,
+				college_id: $collegeFilter.length ? $collegeFilter.val() : 0,
+			} ).done( function ( response ) {
+				if ( response.success ) {
+					renderResults( response.data.results );
+				}
+			} );
+		}
 
 		function closeList() {
 			$list.attr( 'hidden', true ).empty();
@@ -170,22 +184,31 @@
 
 			window.clearTimeout( debounceTimer );
 
-			if ( term.length < 2 ) {
+			var collegeSelected = $collegeFilter.length && '0' !== $collegeFilter.val();
+			if ( term.length < 2 && ! collegeSelected ) {
 				closeList();
 				return;
 			}
 
 			debounceTimer = window.setTimeout( function () {
-				$.post( certivaAdmin.ajaxUrl, {
-					action: 'certiva_search_students',
-					nonce: certivaAdmin.nonce,
-					term: term,
-				} ).done( function ( response ) {
-					if ( response.success ) {
-						renderResults( response.data.results );
-					}
-				} );
+				runSearch( term );
 			}, 300 );
+		} );
+
+		// Selecting a college re-runs the search immediately (even with no
+		// typed term yet, so picking a college alone browses its roster),
+		// and clears any previously picked student since it may not be in
+		// the newly chosen college.
+		$collegeFilter.on( 'change', function () {
+			$hidden.val( '' );
+			$search.val( '' );
+
+			if ( '0' === $collegeFilter.val() ) {
+				closeList();
+				return;
+			}
+
+			runSearch( '' );
 		} );
 
 		$search.on( 'keydown', function ( e ) {

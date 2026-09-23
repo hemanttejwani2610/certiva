@@ -2,6 +2,7 @@
 namespace Certiva\Admin;
 
 use Certiva\Data\Schema;
+use Certiva\PostTypes\CollegeTaxonomy;
 use Certiva\PostTypes\StudentPostType;
 use Certiva\Support\Capabilities;
 
@@ -15,11 +16,14 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Sites bulk-importing students (see StudentImporter) can easily have far
  * more students than is sane to load into a single <select>, so the admin
  * types a name or email and gets a short, indexed-query result set instead
- * of every student being fetched and rendered up front.
+ * of every student being fetched and rendered up front. An optional college
+ * filter narrows the search further — useful once several colleges' worth
+ * of students share similar names.
  */
 final class StudentSearchAjax {
 
-	private const RESULT_LIMIT = 20;
+	private const RESULT_LIMIT    = 20;
+	private const CANDIDATE_LIMIT = 60; // Fetched before an optional college filter narrows it down to RESULT_LIMIT.
 	private const MIN_TERM_LENGTH = 2;
 
 	public static function register(): void {
@@ -34,14 +38,30 @@ final class StudentSearchAjax {
 			return;
 		}
 
-		$term = isset( $_POST['term'] ) ? sanitize_text_field( wp_unslash( $_POST['term'] ) ) : '';
+		$term      = isset( $_POST['term'] ) ? sanitize_text_field( wp_unslash( $_POST['term'] ) ) : '';
+		$college_id = isset( $_POST['college_id'] ) ? absint( $_POST['college_id'] ) : 0;
 
-		if ( mb_strlen( $term ) < self::MIN_TERM_LENGTH ) {
+		if ( mb_strlen( $term ) < self::MIN_TERM_LENGTH && $college_id <= 0 ) {
 			wp_send_json_success( [ 'results' => [] ] );
 			return;
 		}
 
-		$ids = self::find_matching_student_ids( $term );
+		$ids = mb_strlen( $term ) >= self::MIN_TERM_LENGTH
+			? self::find_matching_student_ids( $term )
+			: self::find_students_in_college( $college_id );
+
+		if ( $college_id > 0 && mb_strlen( $term ) >= self::MIN_TERM_LENGTH ) {
+			$ids = array_values(
+				array_filter(
+					$ids,
+					static function ( $id ) use ( $college_id ) {
+						return has_term( $college_id, CollegeTaxonomy::TAXONOMY, $id );
+					}
+				)
+			);
+		}
+
+		$ids = array_slice( $ids, 0, self::RESULT_LIMIT );
 
 		if ( empty( $ids ) ) {
 			wp_send_json_success( [ 'results' => [] ] );
@@ -71,7 +91,9 @@ final class StudentSearchAjax {
 	/**
 	 * Matches by title (via WP_Query's search) and by email (via the
 	 * student-email index table, which is indexed for exactly this lookup),
-	 * merging the two result sets.
+	 * merging the two result sets. Fetches a wider candidate set than the
+	 * final result limit so an optional college filter still has enough to
+	 * work with.
 	 *
 	 * @return int[]
 	 */
@@ -83,7 +105,7 @@ final class StudentSearchAjax {
 				'post_type'      => StudentPostType::POST_TYPE,
 				'post_status'    => 'publish',
 				's'              => $term,
-				'posts_per_page' => self::RESULT_LIMIT,
+				'posts_per_page' => self::CANDIDATE_LIMIT,
 				'fields'         => 'ids',
 				'orderby'        => 'title',
 				'order'          => 'ASC',
@@ -96,11 +118,42 @@ final class StudentSearchAjax {
 		$like  = '%' . $wpdb->esc_like( strtolower( $term ) ) . '%';
 
 		$email_ids = $wpdb->get_col(
-			$wpdb->prepare( "SELECT student_id FROM {$table} WHERE email LIKE %s LIMIT %d", $like, self::RESULT_LIMIT )
+			$wpdb->prepare( "SELECT student_id FROM {$table} WHERE email LIKE %s LIMIT %d", $like, self::CANDIDATE_LIMIT )
 		);
 
-		$ids = array_unique( array_merge( $ids, array_map( 'absint', $email_ids ) ) );
+		return array_unique( array_merge( $ids, array_map( 'absint', $email_ids ) ) );
+	}
 
-		return array_slice( $ids, 0, self::RESULT_LIMIT );
+	/**
+	 * Lists students in a college without any text search — lets an admin
+	 * browse a college's roster by picking it from the filter alone.
+	 *
+	 * @return int[]
+	 */
+	private static function find_students_in_college( int $college_id ): array {
+		if ( $college_id <= 0 || ! term_exists( $college_id, CollegeTaxonomy::TAXONOMY ) ) {
+			return [];
+		}
+
+		$query = new \WP_Query(
+			[
+				'post_type'      => StudentPostType::POST_TYPE,
+				'post_status'    => 'publish',
+				'posts_per_page' => self::RESULT_LIMIT,
+				'fields'         => 'ids',
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+				'no_found_rows'  => true,
+				'tax_query'      => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+					[
+						'taxonomy' => CollegeTaxonomy::TAXONOMY,
+						'field'    => 'term_id',
+						'terms'    => $college_id,
+					],
+				],
+			]
+		);
+
+		return $query->posts;
 	}
 }

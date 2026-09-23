@@ -29,6 +29,7 @@ return array(
     'Certiva\\Pdf\\CertificateService' => $baseDir . '/includes/Pdf/CertificateService.php',
     'Certiva\\Pdf\\FieldDefinitions' => $baseDir . '/includes/Pdf/FieldDefinitions.php',
     'Certiva\\Plugin' => $baseDir . '/includes/Plugin.php',
+    'Certiva\\PostTypes\\CollegeTaxonomy' => $baseDir . '/includes/PostTypes/CollegeTaxonomy.php',
     'Certiva\\PostTypes\\EventPostType' => $baseDir . '/includes/PostTypes/EventPostType.php',
     'Certiva\\PostTypes\\StudentPostType' => $baseDir . '/includes/PostTypes/StudentPostType.php',
     'Certiva\\PostTypes\\TemplatePostType' => $baseDir . '/includes/PostTypes/TemplatePostType.php',

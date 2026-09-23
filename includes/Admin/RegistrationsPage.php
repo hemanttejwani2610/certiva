@@ -5,6 +5,7 @@ use Certiva\Data\RegistrationsRepository;
 use Certiva\PostTypes\StudentPostType;
 use Certiva\PostTypes\EventPostType;
 use Certiva\PostTypes\TemplatePostType;
+use Certiva\PostTypes\CollegeTaxonomy;
 use Certiva\Support\Capabilities;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -101,6 +102,16 @@ final class RegistrationsPage {
 				'order'          => 'ASC',
 			]
 		);
+
+		$colleges = get_terms(
+			[
+				'taxonomy'   => CollegeTaxonomy::TAXONOMY,
+				'hide_empty' => false,
+				'orderby'    => 'name',
+				'order'      => 'ASC',
+			]
+		);
+		$colleges = is_wp_error( $colleges ) ? [] : $colleges;
 
 		require CERTIVA_DIR . 'templates/admin/registrations-page.php';
 	}

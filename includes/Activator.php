@@ -5,6 +5,7 @@ use Certiva\Data\Schema;
 use Certiva\PostTypes\StudentPostType;
 use Certiva\PostTypes\EventPostType;
 use Certiva\PostTypes\TemplatePostType;
+use Certiva\PostTypes\CollegeTaxonomy;
 use Certiva\Support\PrivateStorage;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -19,6 +20,7 @@ final class Activator {
 		StudentPostType::register_post_type();
 		EventPostType::register_post_type();
 		TemplatePostType::register_post_type();
+		CollegeTaxonomy::register_taxonomy();
 		flush_rewrite_rules();
 
 		PrivateStorage::ensure_protected();

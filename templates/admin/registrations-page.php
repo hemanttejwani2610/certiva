@@ -8,6 +8,7 @@
  * @var int      $paged
  * @var \WP_Post[] $events
  * @var \WP_Post[] $templates
+ * @var \WP_Term[] $colleges
  * @var int      $filter_event
  * @var string   $filter_status
  */
@@ -47,6 +48,17 @@ $notice_messages = [
 			<tr>
 				<th><label for="certiva-student-search"><?php esc_html_e( 'Student', 'certiva' ); ?></label></th>
 				<td>
+					<?php if ( ! empty( $colleges ) ) : ?>
+						<p>
+							<label for="certiva-college-filter-select"><?php esc_html_e( 'Filter by college:', 'certiva' ); ?></label>
+							<select id="certiva-college-filter-select">
+								<option value="0"><?php esc_html_e( 'All colleges', 'certiva' ); ?></option>
+								<?php foreach ( $colleges as $college ) : ?>
+									<option value="<?php echo esc_attr( (string) $college->term_id ); ?>"><?php echo esc_html( $college->name ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</p>
+					<?php endif; ?>
 					<div class="certiva-student-picker">
 						<input
 							type="text"

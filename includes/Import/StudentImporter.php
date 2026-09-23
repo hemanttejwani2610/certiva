@@ -2,6 +2,7 @@
 namespace Certiva\Import;
 
 use Certiva\Data\StudentEmailIndexRepository;
+use Certiva\PostTypes\CollegeTaxonomy;
 use Certiva\PostTypes\StudentPostType;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -20,6 +21,7 @@ final class StudentImporter {
 	public const TARGET_FULL_NAME   = 'full_name';
 	public const TARGET_EMAIL       = 'email';
 	public const TARGET_STUDENT_ID  = 'student_code';
+	public const TARGET_COLLEGE     = 'college';
 	public const TARGET_EXTRA       = 'extra';
 	public const TARGET_SKIP        = 'skip';
 
@@ -36,6 +38,7 @@ final class StudentImporter {
 			self::TARGET_FULL_NAME  => __( 'Full Name', 'certiva' ),
 			self::TARGET_EMAIL      => __( 'Email Address', 'certiva' ),
 			self::TARGET_STUDENT_ID => __( 'Student ID', 'certiva' ),
+			self::TARGET_COLLEGE    => __( 'College', 'certiva' ),
 			self::TARGET_EXTRA      => __( 'Extra Placeholder Field', 'certiva' ),
 		];
 	}
@@ -70,6 +73,7 @@ final class StudentImporter {
 		}
 
 		$student_id_col = array_search( self::TARGET_STUDENT_ID, $column_targets, true );
+		$college_col    = array_search( self::TARGET_COLLEGE, $column_targets, true );
 
 		$extra_cols = [];
 		foreach ( $column_targets as $col => $target ) {
@@ -137,6 +141,10 @@ final class StudentImporter {
 				? sanitize_text_field( trim( (string) $row[ $student_id_col ] ) )
 				: null;
 
+			$college = false !== $college_col && isset( $row[ $college_col ] )
+				? sanitize_text_field( trim( (string) $row[ $college_col ] ) )
+				: '';
+
 			$extra_fields = [];
 			foreach ( $extra_cols as $col => $label ) {
 				$value = isset( $row[ $col ] ) ? sanitize_text_field( trim( (string) $row[ $col ] ) ) : '';
@@ -146,7 +154,7 @@ final class StudentImporter {
 				$extra_fields[] = [ 'label' => sanitize_text_field( $label ), 'value' => $value ];
 			}
 
-			$outcome = self::upsert_student( $full_name, $email, $student_code, $extra_fields, $update_existing );
+			$outcome = self::upsert_student( $full_name, $email, $student_code, $college, $extra_fields, $update_existing );
 
 			$results[ $outcome ]++;
 		}
@@ -159,7 +167,7 @@ final class StudentImporter {
 	/**
 	 * @return string 'created' or 'updated'
 	 */
-	private static function upsert_student( string $full_name, string $email, ?string $student_code, array $extra_fields, bool $update_existing ): string {
+	private static function upsert_student( string $full_name, string $email, ?string $student_code, string $college, array $extra_fields, bool $update_existing ): string {
 		$normalized    = StudentEmailIndexRepository::normalize( $email );
 		$existing_ids  = $update_existing ? StudentEmailIndexRepository::get_student_ids_for_email( $normalized ) : [];
 		$existing_id   = ! empty( $existing_ids ) ? (int) $existing_ids[0] : 0;
@@ -193,6 +201,13 @@ final class StudentImporter {
 
 		if ( null !== $student_code ) {
 			update_post_meta( $student_id, 'certiva_student_code', $student_code );
+		}
+
+		if ( '' !== $college ) {
+			$term_id = CollegeTaxonomy::get_or_create_term_id( $college );
+			if ( $term_id > 0 ) {
+				wp_set_object_terms( $student_id, [ $term_id ], CollegeTaxonomy::TAXONOMY, false );
+			}
 		}
 
 		if ( ! empty( $extra_fields ) ) {

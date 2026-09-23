@@ -28,6 +28,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class FieldDefinitions {
 
 	public const KEY_STUDENT_NAME   = 'student_name';
+	public const KEY_COLLEGE        = 'college';
 	public const KEY_EVENT_TITLE    = 'event_title';
 	public const KEY_EVENT_DATE     = 'event_date';
 	public const KEY_CERTIFICATE_ID = 'certificate_id';
@@ -38,6 +39,7 @@ final class FieldDefinitions {
 	public static function standard_keys(): array {
 		return [
 			self::KEY_STUDENT_NAME   => __( 'Student Name', 'certiva' ),
+			self::KEY_COLLEGE        => __( 'College', 'certiva' ),
 			self::KEY_EVENT_TITLE    => __( 'Event Title', 'certiva' ),
 			self::KEY_EVENT_DATE     => __( 'Event Date', 'certiva' ),
 			self::KEY_CERTIFICATE_ID => __( 'Certificate ID', 'certiva' ),
@@ -77,6 +79,7 @@ final class FieldDefinitions {
 	public static function sample_values(): array {
 		return [
 			self::KEY_STUDENT_NAME   => __( 'Aanya Sharma', 'certiva' ),
+			self::KEY_COLLEGE        => __( 'Sample College of Technology', 'certiva' ),
 			self::KEY_EVENT_TITLE    => __( 'Certified WordPress Developer Exam', 'certiva' ),
 			self::KEY_EVENT_DATE     => date_i18n( get_option( 'date_format' ) ),
 			self::KEY_CERTIFICATE_ID => 'CERTIVA-SAMPLE01',

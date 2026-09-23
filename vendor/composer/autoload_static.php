@@ -88,6 +88,7 @@ class ComposerStaticInit2e4022d2e2ac63fd77ae57f736cdd0d6
         'Certiva\\Pdf\\CertificateService' => __DIR__ . '/../..' . '/includes/Pdf/CertificateService.php',
         'Certiva\\Pdf\\FieldDefinitions' => __DIR__ . '/../..' . '/includes/Pdf/FieldDefinitions.php',
         'Certiva\\Plugin' => __DIR__ . '/../..' . '/includes/Plugin.php',
+        'Certiva\\PostTypes\\CollegeTaxonomy' => __DIR__ . '/../..' . '/includes/PostTypes/CollegeTaxonomy.php',
         'Certiva\\PostTypes\\EventPostType' => __DIR__ . '/../..' . '/includes/PostTypes/EventPostType.php',
         'Certiva\\PostTypes\\StudentPostType' => __DIR__ . '/../..' . '/includes/PostTypes/StudentPostType.php',
         'Certiva\\PostTypes\\TemplatePostType' => __DIR__ . '/../..' . '/includes/PostTypes/TemplatePostType.php',

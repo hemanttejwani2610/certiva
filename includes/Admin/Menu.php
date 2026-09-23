@@ -4,6 +4,7 @@ namespace Certiva\Admin;
 use Certiva\PostTypes\StudentPostType;
 use Certiva\PostTypes\EventPostType;
 use Certiva\PostTypes\TemplatePostType;
+use Certiva\PostTypes\CollegeTaxonomy;
 use Certiva\Support\Capabilities;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -35,8 +36,18 @@ final class Menu {
 
 		// Note: Students/Events/Templates submenu items are NOT added here —
 		// registering each post type with 'show_in_menu' => 'certiva' already
-		// makes WordPress core add them automatically. Adding them again here
-		// would duplicate every one of those entries in the menu.
+		// makes WordPress core add them automatically (_add_post_type_submenus()).
+		// That mechanism is post-type-only, though: a taxonomy registered
+		// against a post type with a custom string parent gets NO equivalent
+		// free submenu, so the Colleges screen below has to be added explicitly.
+
+		add_submenu_page(
+			'certiva',
+			__( 'Colleges', 'certiva' ),
+			__( 'Colleges', 'certiva' ),
+			$cap,
+			'edit-tags.php?taxonomy=' . CollegeTaxonomy::TAXONOMY . '&post_type=' . StudentPostType::POST_TYPE
+		);
 
 		add_submenu_page(
 			'certiva',
@@ -47,8 +58,16 @@ final class Menu {
 			[ RegistrationsPage::class, 'render' ]
 		);
 
+		// Registered with an empty parent slug so both pages stay reachable
+		// (via the "Import CSV" button on the Students list and the "Bulk
+		// Register via CSV" button on the Registrations screen) without
+		// cluttering the visible admin menu. add_submenu_page() still
+		// registers the page's hook/callback regardless of parent, it just
+		// won't be listed under any visible top-level menu — an empty
+		// string is used rather than null to avoid a null-passed-to-string-
+		// parameter deprecation notice inside WP core's own handling.
 		add_submenu_page(
-			'certiva',
+			'',
 			__( 'Import Students', 'certiva' ),
 			__( 'Import Students', 'certiva' ),
 			$cap,
@@ -57,7 +76,7 @@ final class Menu {
 		);
 
 		add_submenu_page(
-			'certiva',
+			'',
 			__( 'Bulk Register via CSV', 'certiva' ),
 			__( 'Bulk Register', 'certiva' ),
 			$cap,

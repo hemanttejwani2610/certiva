@@ -3,6 +3,7 @@ namespace Certiva\Pdf;
 
 use Certiva\Data\RegistrationsRepository;
 use Certiva\Data\DownloadTokensRepository;
+use Certiva\PostTypes\CollegeTaxonomy;
 use Certiva\PostTypes\EventPostType;
 use Certiva\PostTypes\TemplatePostType;
 use Certiva\Support\IdGenerator;
@@ -63,6 +64,7 @@ final class CertificateService {
 
 		$values = [
 			FieldDefinitions::KEY_STUDENT_NAME   => get_the_title( $student_id ),
+			FieldDefinitions::KEY_COLLEGE        => CollegeTaxonomy::get_college_name( $student_id ),
 			FieldDefinitions::KEY_EVENT_TITLE    => get_the_title( $event_id ),
 			FieldDefinitions::KEY_EVENT_DATE     => $event_date,
 			FieldDefinitions::KEY_CERTIFICATE_ID => (string) $registration->certificate_id,

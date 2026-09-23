@@ -6,6 +6,7 @@ use Certiva\Data\DownloadTokensRepository;
 use Certiva\PostTypes\StudentPostType;
 use Certiva\PostTypes\EventPostType;
 use Certiva\PostTypes\TemplatePostType;
+use Certiva\PostTypes\CollegeTaxonomy;
 use Certiva\Admin\Menu;
 use Certiva\Admin\SettingsPage;
 use Certiva\Admin\RegistrationsPage;
@@ -41,6 +42,7 @@ final class Plugin {
 		StudentPostType::register();
 		EventPostType::register();
 		TemplatePostType::register();
+		CollegeTaxonomy::register();
 
 		Menu::register();
 		SettingsPage::register();
