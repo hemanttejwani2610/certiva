@@ -3,7 +3,7 @@
         'name' => 'certiva/certiva',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '7b327ce55149813bebee57749f5d1d0bdd287856',
+        'reference' => '7dc0ace65a054c9b84229d45a42b172731fe5aaf',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         'certiva/certiva' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '7b327ce55149813bebee57749f5d1d0bdd287856',
+            'reference' => '7dc0ace65a054c9b84229d45a42b172731fe5aaf',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
