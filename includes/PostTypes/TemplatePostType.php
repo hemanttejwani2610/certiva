@@ -128,10 +128,12 @@ final class TemplatePostType {
 				'fieldPresets'   => FieldDefinitions::presets(),
 				'i18n'           => [
 					'removeField'  => __( 'Remove', 'certiva' ),
-					'selectImage'  => __( 'Select Background Image', 'certiva' ),
-					'useImage'     => __( 'Use this image', 'certiva' ),
-					'previewError' => __( 'Could not generate preview. Check that a background image and page size are set.', 'certiva' ),
+					'selectImage'  => __( 'Select Background File', 'certiva' ),
+					'useImage'     => __( 'Use this file', 'certiva' ),
+					'previewError' => __( 'Could not generate preview. Check that a background and page size are set.', 'certiva' ),
 					'customLabel'  => __( 'Custom Field', 'certiva' ),
+					/* translators: %s: PDF filename */
+					'pdfSelected'  => __( 'PDF background selected: %s', 'certiva' ),
 				],
 			]
 		);
@@ -186,20 +188,43 @@ final class TemplatePostType {
 				</td>
 			</tr>
 			<tr>
-				<th><?php esc_html_e( 'Background Image', 'certiva' ); ?></th>
+				<th><?php esc_html_e( 'Background', 'certiva' ); ?></th>
 				<td>
 					<input type="hidden" id="certiva_bg_attachment_id" name="certiva_bg_attachment_id" value="<?php echo esc_attr( (string) $bg_id ); ?>" />
 					<div id="certiva-bg-preview" style="margin-bottom:8px;">
-						<?php if ( $bg_id ) : ?>
-							<?php echo wp_get_attachment_image( $bg_id, 'medium' ); ?>
-						<?php endif; ?>
+						<?php echo self::render_bg_preview_html( $bg_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped within the method. ?>
 					</div>
-					<button type="button" class="button" id="certiva-select-bg"><?php esc_html_e( 'Select Background Image', 'certiva' ); ?></button>
+					<button type="button" class="button" id="certiva-select-bg"><?php esc_html_e( 'Select Background File', 'certiva' ); ?></button>
 					<button type="button" class="button" id="certiva-remove-bg" <?php echo $bg_id ? '' : 'style="display:none;"'; ?>><?php esc_html_e( 'Remove', 'certiva' ); ?></button>
+					<p class="description"><?php esc_html_e( 'An image (JPG/PNG) or a single-page PDF — exactly one, either type. A PDF background is stretched to fill the page, same as an image.', 'certiva' ); ?></p>
 				</td>
 			</tr>
 		</table>
 		<?php
+	}
+
+	/**
+	 * Renders the background preview: a thumbnail for an image, or a plain
+	 * filename indicator for a PDF (browsers can't thumbnail a PDF from a
+	 * bare <img> the way they can an image attachment).
+	 */
+	private static function render_bg_preview_html( int $bg_id ): string {
+		if ( ! $bg_id ) {
+			return '';
+		}
+
+		if ( 'application/pdf' === get_post_mime_type( $bg_id ) ) {
+			$filename = basename( (string) get_attached_file( $bg_id ) );
+			return '<p>' . esc_html(
+				sprintf(
+					/* translators: %s: PDF filename */
+					__( 'PDF background selected: %s', 'certiva' ),
+					$filename
+				)
+			) . '</p>';
+		}
+
+		return wp_get_attachment_image( $bg_id, 'medium' );
 	}
 
 	public static function render_designer_box( \WP_Post $post ): void {
@@ -207,11 +232,16 @@ final class TemplatePostType {
 		if ( ! is_string( $fields_json ) || '' === $fields_json ) {
 			$fields_json = wp_json_encode( FieldDefinitions::defaults() );
 		}
-		$bg_id = (int) get_post_meta( $post->ID, 'certiva_bg_attachment_id', true );
-		$bg_url = $bg_id ? wp_get_attachment_image_url( $bg_id, 'large' ) : '';
+		$bg_id       = (int) get_post_meta( $post->ID, 'certiva_bg_attachment_id', true );
+		$bg_is_pdf   = $bg_id && 'application/pdf' === get_post_mime_type( $bg_id );
+		$bg_url      = ( $bg_id && ! $bg_is_pdf ) ? wp_get_attachment_image_url( $bg_id, 'large' ) : '';
+		$bg_pdf_url  = ( $bg_id && $bg_is_pdf ) ? wp_get_attachment_url( $bg_id ) : '';
 		?>
 		<p class="description"><?php esc_html_e( 'Drag fields onto the certificate. Position and styling are saved with the template.', 'certiva' ); ?></p>
-		<div id="certiva-designer" data-bg-url="<?php echo esc_url( $bg_url ); ?>">
+		<?php if ( $bg_is_pdf ) : ?>
+			<p class="description"><em><?php esc_html_e( 'The PDF is shown below using your browser\'s own PDF viewer as a rough visual guide — its alignment with the fields isn\'t pixel-perfect. Use "Preview with Sample Data" for the accurate, final result.', 'certiva' ); ?></em></p>
+		<?php endif; ?>
+		<div id="certiva-designer" data-bg-url="<?php echo esc_url( $bg_url ); ?>" data-bg-pdf-url="<?php echo esc_url( $bg_pdf_url ); ?>">
 			<div id="certiva-designer-stage" class="certiva-designer-stage">
 				<div id="certiva-designer-fields"></div>
 			</div>
@@ -263,8 +293,13 @@ final class TemplatePostType {
 		update_post_meta( $post_id, 'certiva_orientation', $orientation );
 
 		$bg_id = isset( $_POST['certiva_bg_attachment_id'] ) ? absint( $_POST['certiva_bg_attachment_id'] ) : 0;
-		if ( $bg_id > 0 && 'attachment' !== get_post_type( $bg_id ) ) {
-			$bg_id = 0;
+		if ( $bg_id > 0 ) {
+			$mime = get_post_mime_type( $bg_id );
+			$is_supported = 'attachment' === get_post_type( $bg_id )
+				&& ( 'application/pdf' === $mime || str_starts_with( (string) $mime, 'image/' ) );
+			if ( ! $is_supported ) {
+				$bg_id = 0;
+			}
 		}
 		update_post_meta( $post_id, 'certiva_bg_attachment_id', $bg_id );
 

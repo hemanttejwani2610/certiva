@@ -41,14 +41,44 @@
 		$stage.css( { width: widthPx + 'px', height: heightPx + 'px' } );
 
 		var bgUrl = $( '#certiva-designer' ).data( 'bg-url' );
-		if ( bgUrl ) {
-			$stage.css( {
-				backgroundImage: 'url(' + bgUrl + ')',
-				backgroundSize: '100% 100%',
-				backgroundRepeat: 'no-repeat',
-			} );
-		} else {
+		var pdfUrl = $( '#certiva-designer' ).data( 'bg-pdf-url' );
+
+		if ( pdfUrl ) {
+			// A native <embed> renders the PDF inline as a visual reference
+			// while positioning fields. Alignment with the browser's own PDF
+			// viewer isn't pixel-perfect across browsers, so this is a rough
+			// guide only — "Preview with Sample Data" remains the accurate
+			// check, rendered through the same pipeline used for real
+			// certificates. pointer-events:none lets clicks/drags pass
+			// through to the field layer above it instead of the PDF viewer.
 			$stage.css( 'background-image', 'none' );
+			// #toolbar=0&navpanes=0&scrollbar=0 asks the browser's PDF viewer
+			// to hide its own toolbar/thumbnail sidebar, which otherwise eat
+			// into the box and shift the rendered page away from filling it
+			// edge-to-edge (Chrome honours this; other browsers may not —
+			// another reason this stays a rough guide, not the source of truth).
+			var embedSrc = pdfUrl + '#toolbar=0&navpanes=0&scrollbar=0&view=FitH';
+			var $embed = $stage.find( '#certiva-designer-pdf-embed' );
+			if ( ! $embed.length ) {
+				$embed = $( '<embed id="certiva-designer-pdf-embed" type="application/pdf" />' )
+					.css( { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, border: 0, pointerEvents: 'none' } )
+					.prependTo( $stage );
+			}
+			if ( $embed.attr( 'src' ) !== embedSrc ) {
+				$embed.attr( 'src', embedSrc );
+			}
+		} else {
+			$stage.find( '#certiva-designer-pdf-embed' ).remove();
+
+			if ( bgUrl ) {
+				$stage.css( {
+					backgroundImage: 'url(' + bgUrl + ')',
+					backgroundSize: '100% 100%',
+					backgroundRepeat: 'no-repeat',
+				} );
+			} else {
+				$stage.css( 'background-image', 'none' );
+			}
 		}
 
 		renderAllFields();
@@ -377,14 +407,25 @@
 				title: certivaTemplateEditor.i18n.selectImage,
 				button: { text: certivaTemplateEditor.i18n.useImage },
 				multiple: false,
-				library: { type: 'image' },
+				library: { type: [ 'image', 'application/pdf' ] },
 			} );
 			frame.on( 'select', function () {
 				var attachment = frame.state().get( 'selection' ).first().toJSON();
+				var isPdf = 'application/pdf' === attachment.mime;
+
 				$( '#certiva_bg_attachment_id' ).val( attachment.id );
-				$( '#certiva-bg-preview' ).html( '<img src="' + attachment.url + '" style="max-width:300px;height:auto;" />' );
 				$( '#certiva-remove-bg' ).show();
-				$( '#certiva-designer' ).data( 'bg-url', attachment.url );
+
+				if ( isPdf ) {
+					$( '#certiva-bg-preview' ).html( '<p>' + certivaTemplateEditor.i18n.pdfSelected.replace( '%s', attachment.filename || attachment.title ) + '</p>' );
+					$( '#certiva-designer' ).data( 'bg-url', '' );
+					$( '#certiva-designer' ).data( 'bg-pdf-url', attachment.url );
+				} else {
+					$( '#certiva-bg-preview' ).html( '<img src="' + attachment.url + '" style="max-width:300px;height:auto;" />' );
+					$( '#certiva-designer' ).data( 'bg-url', attachment.url );
+					$( '#certiva-designer' ).data( 'bg-pdf-url', '' );
+				}
+
 				resizeStage();
 			} );
 			frame.open();
@@ -396,6 +437,7 @@
 			$( '#certiva-bg-preview' ).empty();
 			$( this ).hide();
 			$( '#certiva-designer' ).data( 'bg-url', '' );
+			$( '#certiva-designer' ).data( 'bg-pdf-url', '' );
 			resizeStage();
 		} );
 	}

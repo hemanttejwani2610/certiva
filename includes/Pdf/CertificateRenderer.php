@@ -24,6 +24,13 @@ if ( ! defined( 'ABSPATH' ) ) {
  * unsupported lookup structures and ran away reading garbage coverage
  * ranges), while Lohit Devanagari's simpler tables — the same font family
  * mPDF bundles for other Indic scripts — parse and shape correctly.
+ *
+ * The background may be either a raster image or a PDF file (never both —
+ * a template has exactly one background). A PDF background is placed via
+ * mPDF's bundled FPDI integration (setasign/fpdi, already a transitive
+ * mpdf/mpdf dependency — no extra library needed): its first page is
+ * imported and stretched to fill the certificate page, then the same
+ * positioned text fields are written on top of it as with an image.
  */
 final class CertificateRenderer {
 
@@ -34,20 +41,45 @@ final class CertificateRenderer {
 
 	/**
 	 * @param array{width_mm: float, height_mm: float, orientation: string} $page
-	 * @param string                                                        $bg_path Absolute filesystem path to the background image, or ''.
+	 * @param string                                                        $bg_path Absolute filesystem path to the background image or PDF, or ''.
 	 * @param array                                                         $fields  Sanitized field definitions (see FieldDefinitions).
 	 * @param array<string, string>                                         $values  key => already-plain-text value (will be escaped for HTML here).
+	 *
+	 * @throws \Mpdf\MpdfException If a PDF background can't be parsed (e.g. corrupt or encrypted).
 	 */
 	public static function render( array $page, string $bg_path, array $fields, array $values ): string {
 		PrivateStorage::ensure_protected();
 
 		$mpdf = self::make_instance( $page );
 
-		$html = self::build_html( $page, $bg_path, $fields, $values );
+		$is_pdf_background = $bg_path && self::is_pdf( $bg_path ) && file_exists( $bg_path );
+
+		if ( $is_pdf_background ) {
+			self::place_pdf_background( $mpdf, $bg_path, $page );
+		}
+
+		// A PDF background is already drawn onto the page above; build_html()
+		// only needs to add an <img> background for the image case.
+		$html = self::build_html( $page, $is_pdf_background ? '' : $bg_path, $fields, $values );
 
 		$mpdf->WriteHTML( $html );
 
 		return $mpdf->Output( '', 'S' );
+	}
+
+	private static function is_pdf( string $path ): bool {
+		return 'pdf' === strtolower( pathinfo( $path, PATHINFO_EXTENSION ) );
+	}
+
+	/**
+	 * Imports page 1 of a PDF and stretches it to fill the certificate page,
+	 * using mPDF's built-in FPDI integration. Called before WriteHTML() so
+	 * the positioned text fields render on top of it, not underneath.
+	 */
+	private static function place_pdf_background( \Mpdf\Mpdf $mpdf, string $pdf_path, array $page ): void {
+		$mpdf->setSourceFile( $pdf_path );
+		$template_id = $mpdf->importPage( 1 );
+		$mpdf->useTemplate( $template_id, 0, 0, (float) $page['width_mm'], (float) $page['height_mm'] );
 	}
 
 	private static function make_instance( array $page ): \Mpdf\Mpdf {

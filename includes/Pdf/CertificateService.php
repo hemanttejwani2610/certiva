@@ -112,6 +112,28 @@ final class CertificateService {
 	}
 
 	/**
+	 * Calls the renderer, converting a render-time exception (e.g. a
+	 * corrupt or encrypted PDF background that mPDF's PDF importer can't
+	 * parse) into a WP_Error instead of an uncaught fatal.
+	 *
+	 * @return string|\WP_Error PDF binary, or WP_Error.
+	 */
+	private static function render_or_error( array $template, array $values ) {
+		try {
+			return CertificateRenderer::render( $template['page'], $template['bg_path'], $template['fields'], $values );
+		} catch ( \Throwable $e ) {
+			return new \WP_Error(
+				'certiva_render_failed',
+				sprintf(
+					/* translators: %s: underlying error message */
+					__( 'Could not render the certificate PDF: %s', 'certiva' ),
+					$e->getMessage()
+				)
+			);
+		}
+	}
+
+	/**
 	 * Renders a preview PDF using a registration's real data, without
 	 * requiring eligibility and without saving anything. Used by the admin
 	 * "Preview" action so staff can check a certificate before releasing it.
@@ -135,7 +157,7 @@ final class CertificateService {
 			$values[ FieldDefinitions::KEY_CERTIFICATE_ID ] = __( '(will be assigned on generation)', 'certiva' );
 		}
 
-		return CertificateRenderer::render( $template['page'], $template['bg_path'], $template['fields'], $values );
+		return self::render_or_error( $template, $values );
 	}
 
 	/**
@@ -172,7 +194,10 @@ final class CertificateService {
 		}
 
 		$values = self::build_values( $registration );
-		$pdf    = CertificateRenderer::render( $template['page'], $template['bg_path'], $template['fields'], $values );
+		$pdf    = self::render_or_error( $template, $values );
+		if ( is_wp_error( $pdf ) ) {
+			return $pdf;
+		}
 
 		$relative_path = PrivateStorage::relative_path_for( $registration_id, IdGenerator::random_filename_token() );
 		if ( ! PrivateStorage::save_relative( $relative_path, $pdf ) ) {
@@ -213,7 +238,10 @@ final class CertificateService {
 		}
 
 		$values = self::build_values( $registration );
-		$pdf    = CertificateRenderer::render( $template['page'], $template['bg_path'], $template['fields'], $values );
+		$pdf    = self::render_or_error( $template, $values );
+		if ( is_wp_error( $pdf ) ) {
+			return $pdf;
+		}
 
 		$old_path      = (string) $registration->pdf_path;
 		$relative_path = PrivateStorage::relative_path_for( $registration_id, IdGenerator::random_filename_token() );
