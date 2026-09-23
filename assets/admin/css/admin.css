@@ -20,6 +20,49 @@
 	margin-bottom: 12px;
 }
 
+.certiva-student-picker {
+	position: relative;
+	max-width: 420px;
+}
+
+.certiva-student-picker input[type="text"] {
+	width: 100%;
+}
+
+.certiva-student-results {
+	position: absolute;
+	z-index: 10;
+	top: 100%;
+	left: 0;
+	right: 0;
+	margin: 2px 0 0;
+	padding: 4px 0;
+	list-style: none;
+	background: #fff;
+	border: 1px solid #8c8f94;
+	border-radius: 3px;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+	max-height: 260px;
+	overflow-y: auto;
+}
+
+.certiva-student-results li {
+	padding: 6px 10px;
+	cursor: pointer;
+}
+
+.certiva-student-results li[role="option"]:hover,
+.certiva-student-results li[role="option"].is-active {
+	background: #2271b1;
+	color: #fff;
+}
+
+.certiva-student-results li.certiva-no-results {
+	color: #646970;
+	cursor: default;
+	font-style: italic;
+}
+
 .certiva-extra-fields input {
 	width: 100%;
 }

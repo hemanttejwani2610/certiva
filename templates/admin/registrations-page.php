@@ -6,7 +6,6 @@
  * @var int      $total
  * @var int      $per_page
  * @var int      $paged
- * @var \WP_Post[] $students
  * @var \WP_Post[] $events
  * @var \WP_Post[] $templates
  * @var int      $filter_event
@@ -29,7 +28,10 @@ $notice_messages = [
 ];
 ?>
 <div class="wrap certiva-wrap">
-	<h1><?php esc_html_e( 'Certiva — Registrations', 'certiva' ); ?></h1>
+	<h1>
+		<?php esc_html_e( 'Certiva — Registrations', 'certiva' ); ?>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . \Certiva\Admin\RegistrationImportPage::MENU_SLUG ) ); ?>" class="page-title-action"><?php esc_html_e( 'Bulk Register via CSV', 'certiva' ); ?></a>
+	</h1>
 
 	<?php if ( $notice && isset( $notice_messages[ $notice ] ) ) : ?>
 		<div class="notice notice-<?php echo esc_attr( $notice_messages[ $notice ][0] ); ?> is-dismissible">
@@ -45,16 +47,22 @@ $notice_messages = [
 			<tr>
 				<th><label for="certiva-student-search"><?php esc_html_e( 'Student', 'certiva' ); ?></label></th>
 				<td>
-					<input type="search" id="certiva-student-search" class="regular-text" placeholder="<?php esc_attr_e( 'Type to filter…', 'certiva' ); ?>" data-filter-target="student_id" />
-					<br />
-					<select name="student_id" id="student_id" required style="min-width:320px;">
-						<option value=""><?php esc_html_e( '— Select a student —', 'certiva' ); ?></option>
-						<?php foreach ( $students as $student ) : ?>
-							<option value="<?php echo esc_attr( (string) $student->ID ); ?>">
-								<?php echo esc_html( $student->post_title . ' — ' . get_post_meta( $student->ID, 'certiva_email', true ) ); ?>
-							</option>
-						<?php endforeach; ?>
-					</select>
+					<div class="certiva-student-picker">
+						<input
+							type="text"
+							id="certiva-student-search"
+							class="regular-text"
+							placeholder="<?php esc_attr_e( 'Type a name or email…', 'certiva' ); ?>"
+							autocomplete="off"
+							role="combobox"
+							aria-expanded="false"
+							aria-autocomplete="list"
+							aria-owns="certiva-student-results"
+						/>
+						<input type="hidden" name="student_id" id="student_id" required />
+						<ul id="certiva-student-results" class="certiva-student-results" role="listbox" hidden></ul>
+					</div>
+					<p class="description"><?php esc_html_e( 'Start typing at least 2 characters of a name or email address, then pick a student from the list.', 'certiva' ); ?></p>
 				</td>
 			</tr>
 			<tr>

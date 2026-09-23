@@ -58,6 +58,15 @@ final class Menu {
 
 		add_submenu_page(
 			'certiva',
+			__( 'Bulk Register via CSV', 'certiva' ),
+			__( 'Bulk Register', 'certiva' ),
+			$cap,
+			RegistrationImportPage::MENU_SLUG,
+			[ RegistrationImportPage::class, 'render' ]
+		);
+
+		add_submenu_page(
+			'certiva',
 			__( 'Certiva Settings', 'certiva' ),
 			__( 'Settings', 'certiva' ),
 			$cap,
@@ -98,6 +107,7 @@ final class Menu {
 					'confirmDelete' => __( 'Remove this registration? This cannot be undone.', 'certiva' ),
 					'working'       => __( 'Working…', 'certiva' ),
 					'error'         => __( 'Something went wrong. Please try again.', 'certiva' ),
+					'noStudents'    => __( 'No matching students.', 'certiva' ),
 				],
 			]
 		);

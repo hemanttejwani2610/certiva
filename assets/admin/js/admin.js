@@ -115,18 +115,111 @@
 		$( this ).closest( 'tr' ).remove();
 	} );
 
-	// Simple client-side filter for the student <select> on the Registrations page.
-	$( document ).on( 'input', '#certiva-student-search', function () {
-		var term = $( this ).val().toLowerCase();
-		var $select = $( '#student_id' );
+	// Student type-ahead search on the Registrations page. Queries a small,
+	// indexed result set from the server instead of preloading every
+	// student — sites that bulk-import students via CSV can easily have
+	// thousands, far too many for a single <select>.
+	( function () {
+		var $search = $( '#certiva-student-search' );
+		if ( ! $search.length ) {
+			return;
+		}
 
-		$select.find( 'option' ).each( function () {
-			var $option = $( this );
-			if ( '' === $option.val() ) {
+		var $hidden = $( '#student_id' );
+		var $list = $( '#certiva-student-results' );
+		var debounceTimer = null;
+		var activeIndex = -1;
+
+		function closeList() {
+			$list.attr( 'hidden', true ).empty();
+			$search.attr( 'aria-expanded', 'false' );
+			activeIndex = -1;
+		}
+
+		function renderResults( results ) {
+			$list.empty();
+
+			if ( ! results.length ) {
+				$list.append( $( '<li></li>' ).addClass( 'certiva-no-results' ).text( certivaAdmin.i18n.noStudents || 'No matches.' ) );
+			} else {
+				results.forEach( function ( item ) {
+					$( '<li></li>' )
+						.attr( { role: 'option', tabindex: '-1', 'data-id': item.id, 'data-label': item.label } )
+						.text( item.label )
+						.appendTo( $list );
+				} );
+			}
+
+			$list.removeAttr( 'hidden' );
+			$search.attr( 'aria-expanded', 'true' );
+			activeIndex = -1;
+		}
+
+		function selectItem( $item ) {
+			if ( ! $item || ! $item.length ) {
 				return;
 			}
-			var text = $option.text().toLowerCase();
-			$option.toggle( -1 !== text.indexOf( term ) );
+			$hidden.val( $item.data( 'id' ) );
+			$search.val( $item.data( 'label' ) );
+			closeList();
+		}
+
+		$search.on( 'input', function () {
+			var term = $search.val();
+			$hidden.val( '' ); // Require an explicit pick from the list before this can be submitted.
+
+			window.clearTimeout( debounceTimer );
+
+			if ( term.length < 2 ) {
+				closeList();
+				return;
+			}
+
+			debounceTimer = window.setTimeout( function () {
+				$.post( certivaAdmin.ajaxUrl, {
+					action: 'certiva_search_students',
+					nonce: certivaAdmin.nonce,
+					term: term,
+				} ).done( function ( response ) {
+					if ( response.success ) {
+						renderResults( response.data.results );
+					}
+				} );
+			}, 300 );
 		} );
-	} );
+
+		$search.on( 'keydown', function ( e ) {
+			var $items = $list.find( '[role="option"]' );
+			if ( ! $items.length ) {
+				return;
+			}
+
+			if ( 'ArrowDown' === e.key ) {
+				e.preventDefault();
+				activeIndex = Math.min( activeIndex + 1, $items.length - 1 );
+				$items.removeClass( 'is-active' ).eq( activeIndex ).addClass( 'is-active' );
+			} else if ( 'ArrowUp' === e.key ) {
+				e.preventDefault();
+				activeIndex = Math.max( activeIndex - 1, 0 );
+				$items.removeClass( 'is-active' ).eq( activeIndex ).addClass( 'is-active' );
+			} else if ( 'Enter' === e.key ) {
+				if ( activeIndex > -1 ) {
+					e.preventDefault();
+					selectItem( $items.eq( activeIndex ) );
+				}
+			} else if ( 'Escape' === e.key ) {
+				closeList();
+			}
+		} );
+
+		$list.on( 'click', '[role="option"]', function () {
+			selectItem( $( this ) );
+		} );
+
+		$( document ).on( 'click', function ( e ) {
+			if ( ! $( e.target ).closest( '.certiva-student-picker' ).length ) {
+				closeList();
+			}
+		} );
+	} )();
 } )( jQuery );

@@ -16,6 +16,7 @@ Certiva lets you register students for exams, seminars, and conferences, design 
 - [Data model & architecture](#data-model--architecture)
 - [Admin: creating events, templates, and registrations](#admin-creating-events-templates-and-registrations)
   - [Bulk-importing students from a CSV](#bulk-importing-students-from-a-csv)
+  - [Bulk-registering students for an event from a CSV](#bulk-registering-students-for-an-event-from-a-csv)
 - [Eligibility model](#eligibility-model)
 - [Certificate lifecycle: generate, regenerate, resend](#certificate-lifecycle-generate-regenerate-resend)
 - [Shortcode: `[certiva_certificate_request]`](#shortcode-certiva_certificate_request)
@@ -75,7 +76,7 @@ Certiva keeps each concern in its own layer:
 
 1. **Certiva → Events → Add New**: set the title, type, date, optional location, a default certificate template, and whether certificates are enabled for this event yet.
 2. **Certiva → Templates → Add New**: upload a background image, choose a page size/orientation, then use the visual designer to drag the built-in placeholder fields (student name, event title, event date, certificate ID, issue date) onto the certificate, styling each one (font, size, color, alignment, bold/italic). You can also add a custom placeholder tied to a student's extra field, or static text. **Preview with Sample Data** renders a real PDF with placeholder values so you can check the layout before saving.
-3. **Certiva → Registrations**: register a student for an event, optionally overriding the event's default template, and optionally marking the registration eligible immediately. The same screen lists every registration with its eligibility, certificate status, and actions (Preview / Generate / Regenerate / Download / Resend / Remove). The same list, scoped to one student, also appears as a meta box on that student's edit screen.
+3. **Certiva → Registrations**: register a student for an event by typing a few characters of their name or email into the student field (a live, indexed search — not a preloaded list, so it stays fast with any number of students), optionally overriding the event's default template, and optionally marking the registration eligible immediately. The same screen lists every registration with its eligibility, certificate status, and actions (Preview / Generate / Regenerate / Download / Resend / Remove). The same list, scoped to one student, also appears as a meta box on that student's edit screen.
 
 ### Bulk-importing students from a CSV
 
@@ -87,6 +88,14 @@ Click **Import CSV** above the Students list (or **Certiva → Import Students**
 4. **Import** — you'll get a summary of how many students were created/updated/skipped, with a reason for every skipped row (e.g. missing or invalid email).
 
 Imports are capped at 5,000 rows per file and processed synchronously; split larger rosters into multiple files. The uploaded file is stored in Certiva's private directory only for the few minutes it takes to map and import it, then deleted.
+
+### Bulk-registering students for an event from a CSV
+
+This is a different, separate flow from importing student profiles above — use it once your students already exist, to register a whole batch of them for one specific event at once (for example, uploading a pass list right after grading an exam). Click **Bulk Register via CSV** on the Registrations screen (or **Certiva → Bulk Register**):
+
+1. Choose the **event** every row in this file will be registered for, and upload the `.csv`.
+2. **Map columns** — a required Student Email column (matched against existing students; a row whose email doesn't match anyone is skipped, since this flow never creates new students — import them first), an optional Eligible column (accepts `yes`/`no`/`1`/`0`/`true`/`false` — leaving it unmapped registers everyone as not-yet-eligible, consistent with the rest of Certiva's eligibility model), and an optional Template Override column (matched by template name or numeric ID; an unrecognized value falls back to the event's default template with a warning, rather than failing the row).
+3. **Register** — if a row's student is already registered for that event, its eligibility/template override is updated in place rather than creating a duplicate or erroring, so re-uploading a corrected file is safe.
 
 ---
 

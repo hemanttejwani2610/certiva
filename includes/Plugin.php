@@ -13,6 +13,8 @@ use Certiva\Admin\RegistrationActions;
 use Certiva\Admin\CertificateAdminStream;
 use Certiva\Admin\TemplateAjax;
 use Certiva\Admin\StudentImportPage;
+use Certiva\Admin\RegistrationImportPage;
+use Certiva\Admin\StudentSearchAjax;
 use Certiva\Shortcode\RequestShortcode;
 use Certiva\Public\RequestController;
 use Certiva\Public\DownloadController;
@@ -47,6 +49,8 @@ final class Plugin {
 		CertificateAdminStream::register();
 		TemplateAjax::register();
 		StudentImportPage::register();
+		RegistrationImportPage::register();
+		StudentSearchAjax::register();
 
 		RequestShortcode::register();
 		RequestController::register();
